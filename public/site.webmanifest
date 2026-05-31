@@ -1,0 +1,17 @@
+{
+  "name": "Viper Cleaning Services",
+  "short_name": "Viper Clean",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7faf3",
+  "theme_color": "#05070d",
+  "description": "Website and owner tools for Viper Cleaning Services.",
+  "icons": [
+    {
+      "src": "/images/viper-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

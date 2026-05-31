@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Viper Cleaning Services logo">
+  <rect width="64" height="64" rx="8" fill="#05070d"/>
+  <path d="M9 9h12l11 34L43 9h12L37 55H27L9 9Z" fill="#8fd3ff" stroke="#2684ff" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M20 9c10 13 17 25 21 37" fill="none" stroke="#2684ff" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="46" cy="18" r="3" fill="#ffffff"/>
+  <path d="M44 28h11" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+</svg>
