@@ -30,6 +30,7 @@ import {
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 
 type View = "site" | "ops";
+type SitePage = "home" | "estimate" | "spin" | "contact";
 type CleanType = "standard" | "deep" | "move" | "vacation" | "commercial";
 type Frequency = "one-time" | "weekly" | "biweekly" | "monthly";
 type EstimateStatus = "New" | "Draft" | "Sent" | "Booked" | "Lost";
@@ -462,8 +463,17 @@ function getViewFromLocation() {
   return "site" as const;
 }
 
+function getSitePageFromLocation() {
+  const path = window.location.pathname.toLowerCase();
+  if (path === "/estimate") return "estimate" as const;
+  if (path === "/spin") return "spin" as const;
+  if (path === "/contact") return "contact" as const;
+  return "home" as const;
+}
+
 function App() {
   const [view, setView] = useState<View>(() => getViewFromLocation());
+  const [sitePage, setSitePage] = useState<SitePage>(() => getSitePageFromLocation());
 
   useEffect(() => {
     const syncView = () => {
@@ -472,6 +482,7 @@ function App() {
         window.history.replaceState({}, "", "/owner");
       }
       setView(nextView);
+      setSitePage(getSitePageFromLocation());
     };
 
     syncView();
@@ -486,13 +497,14 @@ function App() {
   const goTo = (nextView: View) => {
     window.history.pushState({}, "", nextView === "ops" ? "/owner" : "/");
     setView(nextView);
+    setSitePage(nextView === "ops" ? "home" : getSitePageFromLocation());
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  return view === "ops" ? <OperationsApp onPublicSite={() => goTo("site")} /> : <MarketingSite />;
+  return view === "ops" ? <OperationsApp onPublicSite={() => goTo("site")} /> : <MarketingSite sitePage={sitePage} onNavigate={setSitePage} />;
 }
 
-function MarketingSite() {
+function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigate: (page: SitePage) => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -672,292 +684,162 @@ function MarketingSite() {
     }
   };
 
+  const navigateToSitePage = (nextPage: SitePage) => {
+    const nextPath =
+      nextPage === "home" ? "/" : nextPage === "estimate" ? "/estimate" : nextPage === "spin" ? "/spin" : "/contact";
+    window.history.pushState({}, "", nextPath);
+    onNavigate(nextPage);
+    setMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const pageIntro =
+    sitePage === "home"
+      ? {
+          eyebrow: "Residential | Commercial | Vacation Homes",
+          title: "Viper Cleaning Services",
+          copy:
+            "Professional cleaning for Florida homes, offices, rentals, and move-ready properties, built around fast response, sharp details, and rooms that feel finished.",
+        }
+      : sitePage === "estimate"
+        ? {
+            eyebrow: "Get estimate",
+            title: "Clear pricing before we ever show up.",
+            copy:
+              "Send the details, review a starting range, and let Viper Cleaning Services follow up with the final plan for your property.",
+          }
+        : sitePage === "spin"
+          ? {
+              eyebrow: "Booking bonus",
+              title: "Redeem your Viper spin code.",
+              copy:
+                "Booked customers can use a one-time code here for a prize tied to their cleaning. Simple, fast, and tracked on our side.",
+            }
+          : {
+              eyebrow: "Contact us",
+              title: "Tell us what you need cleaned.",
+              copy:
+                "Reach out for residential, commercial, deep cleaning, move-out, or vacation rental service across Central Florida.",
+            };
+
   return (
     <div className="site-shell">
       <header className="site-nav">
-        <a className="brand-link" href="#top" aria-label="Viper Cleaning Services home">
+        <button className="brand-link brand-button" type="button" aria-label="Viper Cleaning Services home" onClick={() => navigateToSitePage("home")}>
           <LogoMark />
-        </a>
+        </button>
         <button className="menu-button" type="button" aria-label="Toggle navigation" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <nav className={menuOpen ? "nav-links open" : "nav-links"} aria-label="Primary navigation">
-          <a href="#services">Services</a>
-          <a href="#why">Why us</a>
-          <a href="#estimate">Get estimate</a>
-          <a href="#spin">Spin promo</a>
-          <a href="#contact">Contact</a>
+          {[
+            { id: "home", label: "Home" },
+            { id: "estimate", label: "Estimate" },
+            { id: "spin", label: "Spin" },
+            { id: "contact", label: "Contact" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={sitePage === item.id ? "active" : ""}
+              onClick={() => navigateToSitePage(item.id as SitePage)}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
       </header>
 
-      <main id="top">
-        <section className="hero-section">
+      <main id="top" className="site-main">
+        <section className={`hero-section ${sitePage !== "home" ? "inner-hero" : ""}`}>
           <img className="hero-image" src="/images/viper-cleaning-hero.png" alt="Freshly cleaned Florida vacation home interior" />
           <div className="hero-overlay" />
           <div className="hero-content">
-            <p className="eyebrow">Residential | Commercial | Vacation Homes</p>
-            <h1>Viper Cleaning Services</h1>
+            <p className="eyebrow">{pageIntro.eyebrow}</p>
+            <h1>{pageIntro.title}</h1>
             <p className="motto">{business.motto}</p>
-            <p className="hero-copy">
-              Professional cleaning for Florida homes, offices, rentals, and move-ready properties, built around fast response,
-              sharp details, and rooms that feel finished.
-            </p>
+            <p className="hero-copy">{pageIntro.copy}</p>
             <div className="hero-actions">
-              <a className="btn primary" href="#estimate">
+              <button className="btn primary" type="button" onClick={() => navigateToSitePage(sitePage === "home" ? "estimate" : "contact")}>
                 <Calculator size={18} />
-                Get an estimate
-              </a>
-              <a className="btn secondary" href="#estimate">
+                {sitePage === "home" ? "Get an estimate" : "Request service"}
+              </button>
+              <button className="btn secondary" type="button" onClick={() => navigateToSitePage("contact")}>
                 <Mail size={18} />
-                Request a quote
-              </a>
+                Contact us
+              </button>
               <a className="btn secondary" href={business.phoneHref}>
                 <Phone size={18} />
                 Call now
               </a>
             </div>
-            <div className="trust-row" aria-label="Service highlights">
-              <span>
-                <ShieldCheck size={16} />
-                Detail checklist
-              </span>
-              <span>
-                <Sparkles size={16} />
-                Fresh finish
-              </span>
-              <span>
-                <CalendarCheck size={16} />
-                Recurring plans
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="section clean-section" id="services">
-          <div className="section-inner">
-            <div className="section-heading">
-              <p className="eyebrow dark">Cleaning services</p>
-              <h2>Professional cleaning for homes, rentals, and businesses</h2>
-              <p>
-                From weekly home cleaning to vacation rental turnovers, Viper Cleaning Services delivers reliable, detailed work
-                with rooms reset, surfaces polished, and floors finished clean.
-              </p>
-            </div>
-
-            <div className="service-grid">
-              {serviceCards.map((service) => {
-                const Icon = service.icon;
-                return (
-                  <article className="service-card" key={service.title}>
-                    <Icon size={28} />
-                    <h3>{service.title}</h3>
-                    <p>{service.text}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="section why-section" id="why">
-          <div className="section-inner why-layout">
-            <div>
-              <p className="eyebrow dark">Why choose us</p>
-              <h2>Reliable cleaning with sharp details and a cleaner finish.</h2>
-              <p>
-                Viper Cleaning Services helps Central Florida homeowners, rental hosts, and local businesses keep their spaces
-                fresh, guest-ready, and easier to manage. Every job is built around clear communication, practical scheduling,
-                and cleaning details that make the whole property feel reset.
-              </p>
-            </div>
-            <div className="why-grid">
-              {whyChooseItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <article key={item.title}>
-                    <Icon size={24} />
-                    <h3>{item.title}</h3>
-                    <p>{item.text}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="section process-section">
-          <div className="section-inner split-layout">
-            <div>
-              <p className="eyebrow dark">How it works</p>
-              <h2>A sharp process from the first quote to the final walkthrough.</h2>
-              <p>
-                Tell us what needs cleaning, choose the service level that fits the property, and get a clear estimate before the
-                job is scheduled.
-              </p>
-            </div>
-            <div className="process-list">
-              <div>
-                <span>01</span>
-                <strong>Walkthrough or quick quote</strong>
-                <p>Collect home size, rooms, clean type, add-ons, and frequency.</p>
+            {sitePage === "home" && (
+              <div className="trust-row" aria-label="Service highlights">
+                <span>
+                  <ShieldCheck size={16} />
+                  Detail checklist
+                </span>
+                <span>
+                  <Sparkles size={16} />
+                  Fresh finish
+                </span>
+                <span>
+                  <CalendarCheck size={16} />
+                  Recurring plans
+                </span>
               </div>
-              <div>
-                <span>02</span>
-                <strong>Checklist-based clean</strong>
-                <p>Kitchen, bathrooms, bedrooms, dusting, floors, details, and final reset.</p>
-              </div>
-              <div>
-                <span>03</span>
-                <strong>Follow-up for repeat work</strong>
-                <p>Convert one-time jobs into weekly, biweekly, monthly, or turnover service.</p>
-              </div>
-            </div>
+            )}
           </div>
         </section>
+        {sitePage === "home" && (
+          <>
+            <HomeOverview onEstimate={() => navigateToSitePage("estimate")} onSpin={() => navigateToSitePage("spin")} onContact={() => navigateToSitePage("contact")} />
+            <FaqSection />
+          </>
+        )}
 
-        <section className="section estimate-section" id="estimate">
-          <div className="section-inner estimator-layout">
-            <div className="estimator-copy">
-              <p className="eyebrow dark">Get estimate</p>
-              <h2>Fill out the cleaning form and get a starting price.</h2>
-              <p>
-                Check the service items, add your contact details, and the request saves to the Viper dashboard. Email copies can
-                go to you and to Viper Cleaning Services once email is configured on the server.
-              </p>
-            </div>
+        {sitePage === "estimate" && (
+          <EstimatePage
+            quoteInput={quoteInput}
+            setQuoteInput={setQuoteInput}
+            contact={contact}
+            setContact={setContact}
+            estimate={estimate}
+            quoteStatus={quoteStatus}
+            submitQuoteRequest={submitQuoteRequest}
+            onContact={() => navigateToSitePage("contact")}
+          />
+        )}
 
-            <form className="quote-tool" onSubmit={submitQuoteRequest}>
-              <EstimatorFields input={quoteInput} onChange={setQuoteInput} />
-              <ContactFields contact={contact} onChange={setContact} />
-              <EstimateResult estimate={estimate} service={quoteInput.service} />
-              <button className="btn primary full" type="submit" disabled={quoteStatus.state === "loading"}>
-                <Mail size={18} />
-                {quoteStatus.state === "loading" ? "Saving request..." : "Submit quote request"}
-              </button>
-              {quoteStatus.message && <p className={`status-message ${quoteStatus.state}`}>{quoteStatus.message}</p>}
-            </form>
-          </div>
-        </section>
+        {sitePage === "spin" && (
+          <SpinPage
+            estimate={estimate}
+            hasSpinCode={hasSpinCode}
+            spinCodeInput={spinCodeInput}
+            setSpinCodeInput={setSpinCodeInput}
+            spinClaim={spinClaim}
+            isSpinning={isSpinning}
+            wheelGradient={wheelGradient}
+            wheelRotation={wheelRotation}
+            spinStatus={spinStatus}
+            canSpin={canSpin}
+            spinWheel={spinWheel}
+            onEstimate={() => navigateToSitePage("estimate")}
+          />
+        )}
 
-        <section className="section spin-section" id="spin">
-          <div className="section-inner spin-layout">
-            <div className="spin-copy">
-              <p className="eyebrow dark">Booking bonus</p>
-              <h2>Got a Viper spin code? Use it here for one prize spin.</h2>
-              <p>
-                After a cleaning is booked, Viper Cleaning Services can issue a one-time code. Enter the code here and spin once
-                for your cleaning prize.
-              </p>
-              <div className="promo-terms">
-                <CheckCircle2 size={18} />
-                <span>Each code works one time and keeps the prize attached to that booking.</span>
-              </div>
-            </div>
-
-            <div className="wheel-panel">
-              <div className="wheel-status">
-                <span>Spin code status</span>
-                <strong>{spinClaim ? spinClaim.code : hasSpinCode ? spinCodeInput.trim().toUpperCase() : "Enter code"}</strong>
-                <small>
-                  {spinClaim
-                    ? `Prize saved: ${spinClaim.code}`
-                    : hasSpinCode
-                      ? "Ready to redeem"
-                      : "Enter the one-time code Viper gave you"}
-                </small>
-              </div>
-              <label className="spin-code-field">
-                Spin code
-                <input
-                  value={spinCodeInput}
-                  onChange={(event) => setSpinCodeInput(event.target.value.toUpperCase())}
-                  placeholder="VIPER-ABC123"
-                  autoCapitalize="characters"
-                />
-              </label>
-              <div
-                className={[
-                  "wheel-wrap",
-                  isSpinning ? "spinning" : "idle",
-                  spinClaim ? "claimed" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              >
-                <div className="wheel-pointer" aria-hidden="true" />
-                <div
-                  className="spin-wheel"
-                  style={{
-                    background: wheelGradient,
-                    transform: `rotate(${wheelRotation}deg)`,
-                  }}
-                  aria-label="Prize wheel"
-                >
-                  {wheelPrizes.map((prize, index) => {
-                    const segment = 360 / wheelPrizes.length;
-                    const angle = index * segment + segment / 2;
-                    return (
-                      <span className="wheel-label" style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-104px)` }} key={prize.label}>
-                        <span style={{ transform: `rotate(${-angle}deg)` }}>{prize.wheelLabel}</span>
-                      </span>
-                    );
-                  })}
-                  <div className="wheel-center">
-                    <Gift size={26} />
-                    <span>Spin</span>
-                  </div>
-                </div>
-              </div>
-              <button className="btn primary full" type="button" disabled={!canSpin} onClick={spinWheel}>
-                <Gift size={18} />
-                {spinClaim
-                  ? "Prize saved"
-                  : isSpinning
-                    ? "Spinning..."
-                    : !hasSpinCode
-                      ? "Enter your code"
-                      : "Spin the wheel"}
-              </button>
-              {spinStatus.message && <p className={`status-message dark ${spinStatus.state}`}>{spinStatus.message}</p>}
-              {spinClaim && (
-                <div className="prize-result" role="status">
-                  <strong>You landed on: {spinClaim.prize}</strong>
-                  <span>Prize code: {spinClaim.code}. Viper will have this prize saved on the booking.</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="section faq-section">
-          <div className="section-inner">
-            <div className="section-heading compact-heading">
-              <p className="eyebrow dark">Good questions</p>
-              <h2>Helpful answers for Florida cleaning customers</h2>
-            </div>
-            <div className="faq-grid">
-              <article>
-                <h3>Do you handle vacation rentals?</h3>
-                <p>Yes. Turnovers can include kitchen reset, bathroom polish, floors, linens, restock checks, and photo-ready final details.</p>
-              </article>
-              <article>
-                <h3>What is included in a whole house cleaning?</h3>
-                <p>Kitchen, bathrooms, bedrooms, living areas, dusting, mopping, vacuuming, trash reset, and surface wipe-downs.</p>
-              </article>
-              <article>
-                <h3>Can I book recurring service?</h3>
-                <p>Weekly, biweekly, monthly, commercial, and vacation turnover schedules are supported.</p>
-              </article>
-              <article>
-                <h3>How does the spin bonus work?</h3>
-                <p>After booking, Viper can give you a one-time code that redeems one wheel spin and saves the prize to your booking.</p>
-              </article>
-            </div>
-          </div>
-        </section>
+        {sitePage === "contact" && (
+          <ContactPage
+            contactForm={contactForm}
+            setContactForm={setContactForm}
+            contactFormStatus={contactFormStatus}
+            submitContactForm={submitContactForm}
+            onEstimate={() => navigateToSitePage("estimate")}
+          />
+        )}
       </main>
 
-      <footer className="site-footer" id="contact">
+      <footer className="site-footer">
         <div className="section-inner footer-layout">
           <div>
             <LogoMark />
@@ -983,60 +865,460 @@ function MarketingSite() {
                 <Phone size={18} />
                 {business.phoneDisplay}
               </a>
-              <a className="btn footer-btn" href="#estimate">
+              <button className="btn footer-btn" type="button" onClick={() => navigateToSitePage("estimate")}>
                 <Calculator size={18} />
                 Estimate a cleaning
-              </a>
-            </div>
-
-            <form className="footer-contact-form" onSubmit={submitContactForm}>
-              <div className="panel-heading compact-panel-heading light-panel-heading">
-                <h3>Contact us</h3>
-                <span>Send a message and we will follow up</span>
-              </div>
-              <div className="form-grid compact">
-                <label>
-                  Name
-                  <input value={contactForm.name} onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })} placeholder="Your name" required />
-                </label>
-                <label>
-                  Phone
-                  <input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} placeholder="Best phone number" />
-                </label>
-                <label>
-                  Email
-                  <input type="email" value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} placeholder="Email address" />
-                </label>
-                <label>
-                  Service
-                  <select value={contactForm.service} onChange={(event) => setContactForm({ ...contactForm, service: event.target.value })}>
-                    {Object.values(serviceLabels).map((label) => (
-                      <option value={label} key={label}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label>
-                Message
-                <textarea
-                  value={contactForm.message}
-                  onChange={(event) => setContactForm({ ...contactForm, message: event.target.value })}
-                  placeholder="Tell us what you need cleaned, where the property is, and the best way to reach you."
-                  required
-                />
-              </label>
-              <button className="btn primary full" type="submit" disabled={contactFormStatus.state === "loading"}>
-                <Mail size={18} />
-                {contactFormStatus.state === "loading" ? "Sending..." : "Send message"}
               </button>
-              {contactFormStatus.message && <p className={`status-message footer-status ${contactFormStatus.state}`}>{contactFormStatus.message}</p>}
-            </form>
+              <button className="btn footer-btn" type="button" onClick={() => navigateToSitePage("contact")}>
+                <Mail size={18} />
+                Contact form
+              </button>
+            </div>
+            <div className="footer-note-card">
+              <h3>Need a fast answer?</h3>
+              <p>Call, text, or use the contact page to tell us what kind of cleaning you need and where the property is located.</p>
+            </div>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+function HomeOverview({
+  onEstimate,
+  onSpin,
+  onContact,
+}: {
+  onEstimate: () => void;
+  onSpin: () => void;
+  onContact: () => void;
+}) {
+  return (
+    <>
+      <section className="section clean-section">
+        <div className="section-inner">
+          <div className="section-heading">
+            <p className="eyebrow dark">Cleaning services</p>
+            <h2>Professional cleaning for homes, rentals, and businesses</h2>
+            <p>
+              From weekly home cleaning to vacation rental turnovers, Viper Cleaning Services delivers reliable, detailed work
+              with rooms reset, surfaces polished, and floors finished clean.
+            </p>
+          </div>
+
+          <div className="service-grid">
+            {serviceCards.map((service) => {
+              const Icon = service.icon;
+              return (
+                <article className="service-card" key={service.title}>
+                  <Icon size={28} />
+                  <h3>{service.title}</h3>
+                  <p>{service.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section why-section">
+        <div className="section-inner why-layout">
+          <div>
+            <p className="eyebrow dark">Why choose us</p>
+            <h2>Reliable cleaning with sharp details and a cleaner finish.</h2>
+            <p>
+              Viper Cleaning Services helps Central Florida homeowners, rental hosts, and local businesses keep their spaces
+              fresh, guest-ready, and easier to manage. Every job is built around clear communication, practical scheduling,
+              and cleaning details that make the whole property feel reset.
+            </p>
+          </div>
+          <div className="why-grid">
+            {whyChooseItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <article key={item.title}>
+                  <Icon size={24} />
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section process-section">
+        <div className="section-inner split-layout">
+          <div>
+            <p className="eyebrow dark">How it works</p>
+            <h2>A sharp process from the first quote to the final walkthrough.</h2>
+            <p>
+              Tell us what needs cleaning, choose the service level that fits the property, and get a clear estimate before the
+              job is scheduled.
+            </p>
+          </div>
+          <div className="process-list">
+            <div>
+              <span>01</span>
+              <strong>Walkthrough or quick quote</strong>
+              <p>Collect home size, rooms, clean type, add-ons, and frequency.</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>Checklist-based clean</strong>
+              <p>Kitchen, bathrooms, bedrooms, dusting, floors, details, and final reset.</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>Follow-up for repeat work</strong>
+              <p>Convert one-time jobs into weekly, biweekly, monthly, or turnover service.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section page-cta-band">
+        <div className="section-inner page-cta-grid">
+          <article className="page-cta-card">
+            <Calculator size={22} />
+            <h3>Need pricing first?</h3>
+            <p>Use the estimate page for a fast starting range and send your property details in one step.</p>
+            <button className="btn primary" type="button" onClick={onEstimate}>
+              Get estimate
+            </button>
+          </article>
+          <article className="page-cta-card">
+            <Gift size={22} />
+            <h3>Already booked?</h3>
+            <p>Redeem your one-time spin code on the dedicated spin page and keep your prize attached to the booking.</p>
+            <button className="btn secondary dark-btn" type="button" onClick={onSpin}>
+              Open spin page
+            </button>
+          </article>
+          <article className="page-cta-card">
+            <Mail size={22} />
+            <h3>Want to talk first?</h3>
+            <p>Use the contact page for a quick message if you want help before filling out the estimate form.</p>
+            <button className="btn secondary dark-btn" type="button" onClick={onContact}>
+              Contact us
+            </button>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function EstimatePage({
+  quoteInput,
+  setQuoteInput,
+  contact,
+  setContact,
+  estimate,
+  quoteStatus,
+  submitQuoteRequest,
+  onContact,
+}: {
+  quoteInput: EstimateInput;
+  setQuoteInput: (input: EstimateInput) => void;
+  contact: QuoteContact;
+  setContact: (contact: QuoteContact) => void;
+  estimate: ReturnType<typeof calculateEstimate>;
+  quoteStatus: RequestStatus;
+  submitQuoteRequest: (event: FormEvent) => void;
+  onContact: () => void;
+}) {
+  return (
+    <>
+      <section className="section estimate-section">
+        <div className="section-inner estimator-layout">
+          <div className="estimator-copy">
+            <p className="eyebrow dark">Get estimate</p>
+            <h2>Fill out the cleaning form and get a starting price.</h2>
+            <p>
+              Check the service items, add your contact details, and the request saves to the Viper dashboard. Email copies can
+              go to you and to Viper Cleaning Services once email is configured on the server.
+            </p>
+          </div>
+
+          <form className="quote-tool" onSubmit={submitQuoteRequest}>
+            <EstimatorFields input={quoteInput} onChange={setQuoteInput} />
+            <ContactFields contact={contact} onChange={setContact} />
+            <EstimateResult estimate={estimate} service={quoteInput.service} />
+            <button className="btn primary full" type="submit" disabled={quoteStatus.state === "loading"}>
+              <Mail size={18} />
+              {quoteStatus.state === "loading" ? "Saving request..." : "Submit quote request"}
+            </button>
+            {quoteStatus.message && <p className={`status-message ${quoteStatus.state}`}>{quoteStatus.message}</p>}
+          </form>
+        </div>
+      </section>
+
+      <section className="section clean-section">
+        <div className="section-inner slim-support-grid">
+          <article className="support-card">
+            <ShieldCheck size={22} />
+            <h3>Clear starting range</h3>
+            <p>Use the form for ballpark pricing before final condition, access, and scheduling details are confirmed.</p>
+          </article>
+          <article className="support-card">
+            <Phone size={22} />
+            <h3>Need help first?</h3>
+            <p>Some properties are easier to discuss first. Reach out directly and we can point you to the right service plan.</p>
+            <button className="btn neutral" type="button" onClick={onContact}>
+              Contact page
+            </button>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function SpinPage({
+  estimate,
+  hasSpinCode,
+  spinCodeInput,
+  setSpinCodeInput,
+  spinClaim,
+  isSpinning,
+  wheelGradient,
+  wheelRotation,
+  spinStatus,
+  canSpin,
+  spinWheel,
+  onEstimate,
+}: {
+  estimate: ReturnType<typeof calculateEstimate>;
+  hasSpinCode: boolean;
+  spinCodeInput: string;
+  setSpinCodeInput: (code: string) => void;
+  spinClaim: SpinClaim | null;
+  isSpinning: boolean;
+  wheelGradient: string;
+  wheelRotation: number;
+  spinStatus: RequestStatus;
+  canSpin: boolean;
+  spinWheel: () => void;
+  onEstimate: () => void;
+}) {
+  return (
+    <>
+      <section className="section spin-section">
+        <div className="section-inner spin-layout">
+          <div className="spin-copy">
+            <p className="eyebrow dark">Booking bonus</p>
+            <h2>Got a Viper spin code? Use it here for one prize spin.</h2>
+            <p>
+              After a cleaning is booked, Viper Cleaning Services can issue a one-time code. Enter the code here and spin once
+              for your cleaning prize.
+            </p>
+            <div className="promo-terms">
+              <CheckCircle2 size={18} />
+              <span>Each code works one time and keeps the prize attached to that booking.</span>
+            </div>
+            <div className="spin-page-note">
+              <strong>Need to book first?</strong>
+              <p>Use the estimate page if you still need pricing or want to send your service details before booking.</p>
+              <button className="btn neutral" type="button" onClick={onEstimate}>
+                Go to estimate
+              </button>
+            </div>
+          </div>
+
+          <div className="wheel-panel">
+            <div className="wheel-status">
+              <span>Spin code status</span>
+              <strong>{spinClaim ? spinClaim.code : hasSpinCode ? spinCodeInput.trim().toUpperCase() : "Enter code"}</strong>
+              <small>
+                {spinClaim ? `Prize saved: ${spinClaim.code}` : hasSpinCode ? "Ready to redeem" : "Enter the one-time code Viper gave you"}
+              </small>
+            </div>
+            <label className="spin-code-field">
+              Spin code
+              <input value={spinCodeInput} onChange={(event) => setSpinCodeInput(event.target.value.toUpperCase())} placeholder="VIPER-ABC123" autoCapitalize="characters" />
+            </label>
+            <div className={["wheel-wrap", isSpinning ? "spinning" : "idle", spinClaim ? "claimed" : ""].filter(Boolean).join(" ")}>
+              <div className="wheel-pointer" aria-hidden="true" />
+              <div
+                className="spin-wheel"
+                style={{
+                  background: wheelGradient,
+                  transform: `rotate(${wheelRotation}deg)`,
+                }}
+                aria-label="Prize wheel"
+              >
+                {wheelPrizes.map((prize, index) => {
+                  const segment = 360 / wheelPrizes.length;
+                  const angle = index * segment + segment / 2;
+                  return (
+                    <span className="wheel-label" style={{ transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-104px)` }} key={prize.label}>
+                      <span style={{ transform: `rotate(${-angle}deg)` }}>{prize.wheelLabel}</span>
+                    </span>
+                  );
+                })}
+                <div className="wheel-center">
+                  <Gift size={26} />
+                  <span>Spin</span>
+                </div>
+              </div>
+            </div>
+            <button className="btn primary full" type="button" disabled={!canSpin} onClick={spinWheel}>
+              <Gift size={18} />
+              {spinClaim ? "Prize saved" : isSpinning ? "Spinning..." : !hasSpinCode ? "Enter your code" : "Spin the wheel"}
+            </button>
+            {spinStatus.message && <p className={`status-message dark ${spinStatus.state}`}>{spinStatus.message}</p>}
+            {spinClaim && (
+              <div className="prize-result" role="status">
+                <strong>You landed on: {spinClaim.prize}</strong>
+                <span>Prize code: {spinClaim.code}. Viper will have this prize saved on the booking.</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="section clean-section">
+        <div className="section-inner slim-support-grid">
+          <article className="support-card">
+            <Gift size={22} />
+            <h3>One code, one spin</h3>
+            <p>Every code is tracked so the prize stays tied to the correct booking and cannot be redeemed again later.</p>
+          </article>
+          <article className="support-card">
+            <Sparkles size={22} />
+            <h3>Prize attached to service</h3>
+            <p>Your result stays saved on the Viper side, so it can be applied correctly when the cleaning is finalized.</p>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ContactPage({
+  contactForm,
+  setContactForm,
+  contactFormStatus,
+  submitContactForm,
+  onEstimate,
+}: {
+  contactForm: ContactFormInput;
+  setContactForm: (input: ContactFormInput) => void;
+  contactFormStatus: RequestStatus;
+  submitContactForm: (event: FormEvent) => void;
+  onEstimate: () => void;
+}) {
+  return (
+    <>
+      <section className="section contact-page-section">
+        <div className="section-inner contact-page-grid">
+          <div className="contact-page-copy">
+            <p className="eyebrow dark">Contact us</p>
+            <h2>Send a message and we will follow up.</h2>
+            <p>
+              Tell us the type of cleaning you need, where the property is located, and the best way to reach you. For faster
+              pricing, you can still use the estimate page.
+            </p>
+            <div className="contact-info-list">
+              <a href={business.phoneHref}>
+                <Phone size={18} />
+                <span>{business.phoneDisplay}</span>
+              </a>
+              <a href={`mailto:${business.email}`}>
+                <Mail size={18} />
+                <span>{business.email}</span>
+              </a>
+              <div>
+                <MapPin size={18} />
+                <span>{business.serviceAreas.join(", ")}, FL</span>
+              </div>
+            </div>
+            <button className="btn neutral" type="button" onClick={onEstimate}>
+              <Calculator size={18} />
+              Prefer the estimate form?
+            </button>
+          </div>
+
+          <form className="quote-tool contact-page-form" onSubmit={submitContactForm}>
+            <div className="panel-heading compact-panel-heading">
+              <h3>Contact form</h3>
+              <span>Fast message straight to Viper Cleaning Services</span>
+            </div>
+            <div className="form-grid compact">
+              <label>
+                Name
+                <input value={contactForm.name} onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })} placeholder="Your name" required />
+              </label>
+              <label>
+                Phone
+                <input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} placeholder="Best phone number" />
+              </label>
+              <label>
+                Email
+                <input type="email" value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} placeholder="Email address" />
+              </label>
+              <label>
+                Service
+                <select value={contactForm.service} onChange={(event) => setContactForm({ ...contactForm, service: event.target.value })}>
+                  {Object.values(serviceLabels).map((label) => (
+                    <option value={label} key={label}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <label>
+              Message
+              <textarea
+                value={contactForm.message}
+                onChange={(event) => setContactForm({ ...contactForm, message: event.target.value })}
+                placeholder="Tell us what you need cleaned, where the property is, and the best way to reach you."
+                required
+              />
+            </label>
+            <button className="btn primary full" type="submit" disabled={contactFormStatus.state === "loading"}>
+              <Mail size={18} />
+              {contactFormStatus.state === "loading" ? "Sending..." : "Send message"}
+            </button>
+            {contactFormStatus.message && <p className={`status-message ${contactFormStatus.state}`}>{contactFormStatus.message}</p>}
+          </form>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section className="section faq-section">
+      <div className="section-inner">
+        <div className="section-heading compact-heading">
+          <p className="eyebrow dark">Good questions</p>
+          <h2>Helpful answers for Florida cleaning customers</h2>
+        </div>
+        <div className="faq-grid">
+          <article>
+            <h3>Do you handle vacation rentals?</h3>
+            <p>Yes. Turnovers can include kitchen reset, bathroom polish, floors, linens, restock checks, and photo-ready final details.</p>
+          </article>
+          <article>
+            <h3>What is included in a whole house cleaning?</h3>
+            <p>Kitchen, bathrooms, bedrooms, living areas, dusting, mopping, vacuuming, trash reset, and surface wipe-downs.</p>
+          </article>
+          <article>
+            <h3>Can I book recurring service?</h3>
+            <p>Weekly, biweekly, monthly, commercial, and vacation turnover schedules are supported.</p>
+          </article>
+          <article>
+            <h3>How does the spin bonus work?</h3>
+            <p>After booking, Viper can give you a one-time code that redeems one wheel spin and saves the prize to your booking.</p>
+          </article>
+        </div>
+      </div>
+    </section>
   );
 }
 
