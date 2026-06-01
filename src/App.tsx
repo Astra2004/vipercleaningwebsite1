@@ -30,7 +30,7 @@ import {
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 
 type View = "site" | "ops";
-type SitePage = "home" | "estimate" | "spin" | "contact";
+type SitePage = "home" | "services" | "areas" | "estimate" | "spin" | "contact";
 type CleanType = "standard" | "deep" | "move" | "vacation" | "commercial";
 type Frequency = "one-time" | "weekly" | "biweekly" | "monthly";
 type EstimateStatus = "New" | "Draft" | "Sent" | "Booked" | "Lost";
@@ -231,6 +231,33 @@ const serviceCards = [
     title: "Add-On Details",
     icon: ClipboardList,
     text: "Inside fridge, inside oven, interior windows, pet hair detail, laundry reset, patio sweep, and custom punch lists.",
+  },
+];
+
+const areaPageCards = [
+  {
+    name: "Kissimmee, FL",
+    text: "House cleaning, deep cleaning, move-out cleaning, and vacation rental turnover support for Kissimmee homes and rental properties.",
+  },
+  {
+    name: "Orlando, FL",
+    text: "Residential cleaning, office cleaning, and recurring service options for Orlando clients who need reliable scheduling and polished results.",
+  },
+  {
+    name: "Davenport, FL",
+    text: "Move-in and move-out cleaning, standard house cleaning, and short-term rental reset support in Davenport and surrounding communities.",
+  },
+  {
+    name: "Clermont, FL",
+    text: "Whole-house cleaning, bathroom and kitchen reset work, and recurring cleaning service for Clermont homes and local businesses.",
+  },
+  {
+    name: "Winter Garden, FL",
+    text: "Cleaning services for busy households, move-ready homes, and commercial spaces in Winter Garden with fast follow-up and detail work.",
+  },
+  {
+    name: "Celebration, St. Cloud, and Winter Haven, FL",
+    text: "Flexible cleaning coverage across Celebration, St. Cloud, and Winter Haven for residential, rental, and recurring cleaning needs.",
   },
 ];
 
@@ -465,6 +492,8 @@ function getViewFromLocation() {
 
 function getSitePageFromLocation() {
   const path = window.location.pathname.toLowerCase();
+  if (path === "/services") return "services" as const;
+  if (path === "/service-areas") return "areas" as const;
   if (path === "/estimate") return "estimate" as const;
   if (path === "/spin") return "spin" as const;
   if (path === "/contact") return "contact" as const;
@@ -472,7 +501,9 @@ function getSitePageFromLocation() {
 }
 
 function getSitePagePath(page: SitePage) {
-  return page === "home" ? "/" : `/${page}`;
+  if (page === "home") return "/";
+  if (page === "areas") return "/service-areas";
+  return `/${page}`;
 }
 
 function SiteLink({
@@ -730,6 +761,20 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
           copy:
             "Professional cleaning for Florida homes, offices, rentals, and move-ready properties, built around fast response, sharp details, and rooms that feel finished.",
         }
+      : sitePage === "services"
+        ? {
+            eyebrow: "Cleaning services",
+            title: "Services built for real Florida properties.",
+            copy:
+              "Explore house cleaning, deep cleaning, move-out cleaning, commercial cleaning, and vacation rental turnover service from Viper Cleaning Services.",
+          }
+        : sitePage === "areas"
+          ? {
+              eyebrow: "Service areas",
+              title: "Serving Central Florida homes, rentals, and businesses.",
+              copy:
+                "Viper Cleaning Services works across Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven.",
+            }
       : sitePage === "estimate"
         ? {
             eyebrow: "Get estimate",
@@ -758,6 +803,18 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
         description:
           "Viper Cleaning Services provides house cleaning, deep cleaning, move-out cleaning, commercial cleaning, and vacation rental turnovers in Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven.",
         path: "/",
+      },
+      services: {
+        title: "Cleaning Services | House Cleaning, Deep Cleaning & Commercial Cleaning",
+        description:
+          "Explore residential house cleaning, deep cleaning, move-out cleaning, vacation rental turnover cleaning, and commercial cleaning from Viper Cleaning Services in Central Florida.",
+        path: "/services",
+      },
+      areas: {
+        title: "Service Areas | Cleaning Services in Kissimmee, Orlando, Davenport & More",
+        description:
+          "Viper Cleaning Services serves Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven with house cleaning, deep cleaning, and turnover service.",
+        path: "/service-areas",
       },
       estimate: {
         title: "Get a Cleaning Estimate | Viper Cleaning Services",
@@ -822,6 +879,65 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
       document.head.appendChild(canonical);
     }
     canonical.setAttribute("href", canonicalUrl);
+
+    const existingSchema = document.getElementById("viper-route-schema");
+    existingSchema?.remove();
+
+    const schemaScript = document.createElement("script");
+    schemaScript.type = "application/ld+json";
+    schemaScript.id = "viper-route-schema";
+
+    const baseSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: activeMeta.title,
+      description: activeMeta.description,
+      url: canonicalUrl,
+      isPartOf: {
+        "@type": "WebSite",
+        name: business.name,
+        url: "https://www.vipercleaningservices.com/",
+      },
+    };
+
+    const faqSchema =
+      sitePage === "home"
+        ? {
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "Do you handle vacation rentals?",
+                acceptedAnswer: { "@type": "Answer", text: "Yes. Turnovers can include kitchen reset, bathroom polish, floors, linens, restock checks, and photo-ready final details." },
+              },
+              {
+                "@type": "Question",
+                name: "What is included in a whole house cleaning?",
+                acceptedAnswer: { "@type": "Answer", text: "Kitchen, bathrooms, bedrooms, living areas, dusting, mopping, vacuuming, trash reset, and surface wipe-downs." },
+              },
+              {
+                "@type": "Question",
+                name: "Can I book recurring service?",
+                acceptedAnswer: { "@type": "Answer", text: "Weekly, biweekly, monthly, commercial, and vacation turnover schedules are supported." },
+              },
+            ],
+          }
+        : null;
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: "https://www.vipercleaningservices.com/" },
+        ...(sitePage === "home"
+          ? []
+          : [{ "@type": "ListItem", position: 2, name: activeMeta.title, item: canonicalUrl }]),
+      ],
+    };
+
+    schemaScript.textContent = JSON.stringify([baseSchema, breadcrumbSchema, ...(faqSchema ? [faqSchema] : [])]);
+    document.head.appendChild(schemaScript);
   }, [sitePage]);
 
   return (
@@ -844,6 +960,8 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
         <nav className={menuOpen ? "nav-links open" : "nav-links"} aria-label="Primary navigation">
           {[
             { id: "home", label: "Home" },
+            { id: "services", label: "Services" },
+            { id: "areas", label: "Service Areas" },
             { id: "estimate", label: "Estimate" },
             { id: "spin", label: "Spin" },
             { id: "contact", label: "Contact" },
@@ -906,10 +1024,20 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
         </section>
         {sitePage === "home" && (
           <>
-            <HomeOverview onEstimate={() => navigateToSitePage("estimate")} onSpin={() => navigateToSitePage("spin")} onContact={() => navigateToSitePage("contact")} />
+            <HomeOverview
+              onEstimate={() => navigateToSitePage("estimate")}
+              onSpin={() => navigateToSitePage("spin")}
+              onContact={() => navigateToSitePage("contact")}
+              onServices={() => navigateToSitePage("services")}
+              onAreas={() => navigateToSitePage("areas")}
+            />
             <FaqSection />
           </>
         )}
+
+        {sitePage === "services" && <ServicesPage onEstimate={() => navigateToSitePage("estimate")} onAreas={() => navigateToSitePage("areas")} />}
+
+        {sitePage === "areas" && <AreasPage onEstimate={() => navigateToSitePage("estimate")} onContact={() => navigateToSitePage("contact")} />}
 
         {sitePage === "estimate" && (
           <EstimatePage
@@ -1002,10 +1130,14 @@ function HomeOverview({
   onEstimate,
   onSpin,
   onContact,
+  onServices,
+  onAreas,
 }: {
   onEstimate: () => void;
   onSpin: () => void;
   onContact: () => void;
+  onServices: () => void;
+  onAreas: () => void;
 }) {
   return (
     <>
@@ -1113,6 +1245,189 @@ function HomeOverview({
             <Mail size={22} />
             <h3>Want to talk first?</h3>
             <p>Use the contact page for a quick message if you want help before filling out the estimate form.</p>
+            <button className="btn secondary dark-btn" type="button" onClick={onContact}>
+              Contact us
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section className="section clean-section">
+        <div className="section-inner slim-support-grid">
+          <article className="support-card light-support">
+            <Home size={22} />
+            <h3>Explore every service</h3>
+            <p>See the full cleaning service lineup, including whole-house cleaning, deep cleaning, move-out cleaning, turnovers, and commercial work.</p>
+            <button className="btn neutral" type="button" onClick={onServices}>
+              Services page
+            </button>
+          </article>
+          <article className="support-card light-support">
+            <MapPin size={22} />
+            <h3>See where we work</h3>
+            <p>Browse the Central Florida cities and service areas we cover so customers can confirm they are in our normal route range.</p>
+            <button className="btn neutral" type="button" onClick={onAreas}>
+              Service areas
+            </button>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function ServicesPage({ onEstimate, onAreas }: { onEstimate: () => void; onAreas: () => void }) {
+  return (
+    <>
+      <section className="section clean-section">
+        <div className="section-inner">
+          <div className="section-heading">
+            <p className="eyebrow dark">Cleaning services</p>
+            <h2>Cleaning options for homes, rentals, and small businesses</h2>
+            <p>
+              Viper Cleaning Services provides recurring house cleaning, one-time deep cleaning, move-in and move-out cleaning,
+              vacation rental turnover cleaning, and commercial cleaning across Central Florida.
+            </p>
+          </div>
+          <div className="service-grid">
+            {serviceCards.map((service) => {
+              const Icon = service.icon;
+              return (
+                <article className="service-card" key={service.title}>
+                  <Icon size={28} />
+                  <h3>{service.title}</h3>
+                  <p>{service.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section process-section">
+        <div className="section-inner split-layout">
+          <div>
+            <p className="eyebrow dark">What we clean</p>
+            <h2>From kitchens and bathrooms to offices and turnovers</h2>
+            <p>
+              Typical work includes kitchen cleaning, bathroom cleaning, bedrooms, living spaces, dusting, mopping, vacuuming,
+              floor care, detail wiping, appliance exteriors, and add-on tasks like inside fridge cleaning or pet hair detail.
+            </p>
+          </div>
+          <div className="process-list">
+            <div>
+              <span>01</span>
+              <strong>Whole house cleaning</strong>
+              <p>Routine cleaning for kitchens, bathrooms, bedrooms, floors, dusting, and tidy finishing details.</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>Deep cleaning and move-out work</strong>
+              <p>Extra detail for buildup, edges, high-touch areas, appliance zones, and move-ready presentation.</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>Rental and commercial service</strong>
+              <p>Vacation rental resets, office cleaning, restroom cleaning, breakroom cleaning, and recurring service schedules.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section page-cta-band">
+        <div className="section-inner page-cta-grid">
+          <article className="page-cta-card">
+            <Calculator size={22} />
+            <h3>Ready for pricing?</h3>
+            <p>Use the estimate page to request a starting price for house cleaning, deep cleaning, or commercial work.</p>
+            <button className="btn primary" type="button" onClick={onEstimate}>
+              Get estimate
+            </button>
+          </article>
+          <article className="page-cta-card">
+            <MapPin size={22} />
+            <h3>Need to confirm your city?</h3>
+            <p>Check the service areas page to see where Viper Cleaning Services regularly works across Central Florida.</p>
+            <button className="btn secondary dark-btn" type="button" onClick={onAreas}>
+              View service areas
+            </button>
+          </article>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function AreasPage({ onEstimate, onContact }: { onEstimate: () => void; onContact: () => void }) {
+  return (
+    <>
+      <section className="section clean-section">
+        <div className="section-inner">
+          <div className="section-heading">
+            <p className="eyebrow dark">Service areas</p>
+            <h2>Cleaning services across key Central Florida cities</h2>
+            <p>
+              Viper Cleaning Services works across Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud,
+              and Winter Haven for residential cleaning, deep cleaning, move-out cleaning, vacation rental turnover service, and
+              small commercial cleaning.
+            </p>
+          </div>
+          <div className="service-grid">
+            {areaPageCards.map((area) => (
+              <article className="service-card" key={area.name}>
+                <MapPin size={28} />
+                <h3>{area.name}</h3>
+                <p>{area.text}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section process-section">
+        <div className="section-inner split-layout">
+          <div>
+            <p className="eyebrow dark">Need cleaning near you?</p>
+            <h2>Tell us the property city and service type</h2>
+            <p>
+              The fastest way to confirm scheduling is to send the property location, service type, and approximate size. That
+              helps Viper Cleaning Services quote the job and confirm the route faster.
+            </p>
+          </div>
+          <div className="process-list">
+            <div>
+              <span>01</span>
+              <strong>Send your service details</strong>
+              <p>Share the city, square footage, number of bedrooms and bathrooms, and whether the property needs standard or deep cleaning.</p>
+            </div>
+            <div>
+              <span>02</span>
+              <strong>Get the route confirmed</strong>
+              <p>We confirm whether the property is in our normal service range and what kind of scheduling works best.</p>
+            </div>
+            <div>
+              <span>03</span>
+              <strong>Book the clean</strong>
+              <p>Move forward through the estimate page or send a direct message through the contact page for a faster conversation.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section page-cta-band">
+        <div className="section-inner page-cta-grid">
+          <article className="page-cta-card">
+            <Calculator size={22} />
+            <h3>Need a quote?</h3>
+            <p>Use the estimate page to send the property details and get a starting range for service in your area.</p>
+            <button className="btn primary" type="button" onClick={onEstimate}>
+              Estimate page
+            </button>
+          </article>
+          <article className="page-cta-card">
+            <Mail size={22} />
+            <h3>Need to ask a question first?</h3>
+            <p>Use the contact page for route questions, special requests, or anything that needs a quick answer before booking.</p>
             <button className="btn secondary dark-btn" type="button" onClick={onContact}>
               Contact us
             </button>

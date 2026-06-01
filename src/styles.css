@@ -679,6 +679,17 @@ legend {
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
 }
 
+.light-support {
+  color: var(--teal-900);
+  border-color: rgba(17, 24, 39, 0.08);
+  background: var(--white);
+  box-shadow: 0 12px 30px rgba(8, 34, 32, 0.08);
+}
+
+.light-support svg {
+  color: var(--teal-700);
+}
+
 .page-cta-card h3,
 .support-card h3,
 .footer-note-card h3,
@@ -1667,6 +1678,12 @@ legend {
 
   .contact-page-grid {
     grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .split-layout,
