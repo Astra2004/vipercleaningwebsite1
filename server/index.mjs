@@ -14,8 +14,13 @@ const app = express();
 const port = Number(process.env.PORT || 8787);
 const ownerPassword = process.env.OWNER_PASSWORD || "viper2026";
 const tokenSecret = process.env.SESSION_SECRET || "dev-viper-cleaning-session-secret";
+const publicSiteRoutes = new Set(["/", "/services", "/service-areas", "/estimate", "/spin", "/contact", "/owner"]);
 
 app.use(express.json({ limit: "1mb" }));
+app.use((req, res, next) => {
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  next();
+});
 
 function makeId(prefix) {
   return `${prefix}-${crypto.randomUUID()}`;
@@ -371,6 +376,9 @@ app.post("/api/public/contact", async (req, res) => {
 app.use(express.static(path.join(rootDir, "dist")));
 
 app.use((req, res) => {
+  if (req.method === "GET" && !req.path.startsWith("/api") && !publicSiteRoutes.has(req.path)) {
+    return res.status(404).sendFile(path.join(rootDir, "dist", "404.html"));
+  }
   res.sendFile(path.join(rootDir, "dist", "index.html"));
 });
 

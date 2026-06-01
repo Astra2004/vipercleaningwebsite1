@@ -3,10 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Viper Cleaning Services | House Cleaning, Deep Cleaning & Turnovers in Central Florida</title>
+    <script>
+      document.documentElement.className += " js";
+    </script>
+    <title>Viper Cleaning Services | Cleaning in Central Florida</title>
     <meta
       name="description"
-      content="Viper Cleaning Services provides house cleaning, deep cleaning, move-out cleaning, commercial cleaning, and vacation rental turnovers in Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven."
+      content="House cleaning, deep cleaning, move-out cleaning, commercial cleaning, and vacation rental turnovers in Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven."
     />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.vipercleaningservices.com/" />
@@ -38,7 +41,6 @@
         "image": "https://www.vipercleaningservices.com/images/viper-cleaning-hero.png",
         "description": "House cleaning, deep cleaning, move-in and move-out cleaning, commercial cleaning, and vacation rental turnover cleaning in Kissimmee, Orlando, Winter Haven, Celebration, St. Cloud, Davenport, Clermont, and Winter Garden, Florida.",
         "telephone": "+15673037073",
-        "email": "shane.vipercleaningservices@gmail.com",
         "serviceType": [
           "House cleaning",
           "Deep cleaning",
@@ -49,7 +51,6 @@
         "contactPoint": {
           "@type": "ContactPoint",
           "telephone": "+15673037073",
-          "email": "shane.vipercleaningservices@gmail.com",
           "contactType": "customer service",
           "areaServed": "US-FL"
         },
@@ -135,7 +136,78 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="seo-fallback">
+        <header class="seo-fallback-header">
+          <nav>
+            <a href="/">Home</a>
+            <a href="/services">Services</a>
+            <a href="/service-areas">Service Areas</a>
+            <a href="/estimate">Estimate</a>
+            <a href="/spin">Spin</a>
+            <a href="/contact">Contact</a>
+          </nav>
+        </header>
+        <section>
+          <h1>Viper Cleaning Services</h1>
+          <p>
+            Viper Cleaning Services provides house cleaning, deep cleaning, move-out cleaning, vacation rental turnover cleaning,
+            and commercial cleaning across Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and
+            Winter Haven, Florida.
+          </p>
+          <p>
+            Customers can request a cleaning estimate, redeem a booked customer spin code, or contact Viper Cleaning Services
+            directly for help with recurring residential cleaning, rental turnovers, and office cleaning.
+          </p>
+        </section>
+        <section>
+          <h2>Cleaning Services</h2>
+          <ul>
+            <li><a href="/services">Whole house cleaning</a></li>
+            <li><a href="/services">Deep cleaning</a></li>
+            <li><a href="/services">Move-in and move-out cleaning</a></li>
+            <li><a href="/services">Vacation rental turnover cleaning</a></li>
+            <li><a href="/services">Commercial cleaning</a></li>
+          </ul>
+        </section>
+        <section>
+          <h2>Service Areas</h2>
+          <p>
+            View our <a href="/service-areas">service areas</a> page for city coverage across Central Florida.
+          </p>
+        </section>
+        <section>
+          <h2>Get Started</h2>
+          <p>
+            Use the <a href="/estimate">estimate page</a> for pricing, the <a href="/contact">contact page</a> for questions, or
+            call <a href="tel:+15673037073">(567) 303-7073</a>.
+          </p>
+        </section>
+      </main>
+    </div>
+    <style>
+      .js .seo-fallback {
+        display: none;
+      }
+      .seo-fallback {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1rem 4rem;
+        font-family: Inter, Arial, sans-serif;
+        line-height: 1.6;
+        color: #111827;
+      }
+      .seo-fallback-header nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .seo-fallback a {
+        color: #155eef;
+        text-decoration: none;
+      }
+    </style>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
