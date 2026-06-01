@@ -10,6 +10,7 @@
   --orange: #a9b4c4;
   --line: rgba(17, 24, 39, 0.12);
   --shadow: 0 18px 50px rgba(4, 9, 20, 0.16);
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -46,6 +47,30 @@ textarea {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+.service-card,
+.faq-grid article,
+.metric-card,
+.tool-panel,
+.why-grid article,
+.process-list div,
+.trust-row span,
+.table-row,
+.wheel-panel,
+.quote-tool {
+  transition:
+    transform 220ms var(--ease-out-soft),
+    box-shadow 220ms var(--ease-out-soft),
+    background-color 220ms var(--ease-out-soft),
+    border-color 220ms var(--ease-out-soft),
+    color 220ms var(--ease-out-soft),
+    opacity 220ms var(--ease-out-soft);
 }
 
 img {
@@ -127,6 +152,7 @@ legend {
   color: var(--white);
   background: linear-gradient(180deg, rgba(5, 7, 13, 0.96), rgba(5, 7, 13, 0.78));
   backdrop-filter: blur(18px);
+  animation: slide-down-fade 700ms var(--ease-out-soft);
 }
 
 .brand-link {
@@ -156,6 +182,14 @@ legend {
   stroke-width: 3;
   background: var(--teal-900);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.brand-link:hover .logo-mark,
+.brand-link:focus-visible .logo-mark {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 10px 24px rgba(21, 94, 239, 0.28);
 }
 
 .brand span {
@@ -198,6 +232,11 @@ legend {
   color: var(--white);
 }
 
+.nav-links a:hover,
+.nav-links a:focus-visible {
+  transform: translateY(-1px);
+}
+
 .menu-button {
   display: none;
   width: 42px;
@@ -228,6 +267,7 @@ legend {
 .hero-image {
   object-fit: cover;
   z-index: -2;
+  animation: hero-image-drift 18s ease-in-out infinite alternate;
 }
 
 .hero-overlay {
@@ -240,6 +280,7 @@ legend {
 .hero-content {
   width: min(720px, 100%);
   align-self: center;
+  animation: rise-in 900ms var(--ease-out-soft);
 }
 
 .eyebrow {
@@ -297,6 +338,11 @@ legend {
   line-height: 1;
 }
 
+.btn:hover:not(:disabled),
+.btn:focus-visible:not(:disabled) {
+  transform: translateY(-2px);
+}
+
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.56;
@@ -305,6 +351,7 @@ legend {
 .btn.primary {
   color: #062220;
   background: var(--lime);
+  box-shadow: 0 14px 28px rgba(21, 94, 239, 0.18);
 }
 
 .btn.secondary {
@@ -358,6 +405,15 @@ legend {
   background: rgba(255, 255, 255, 0.11);
   font-size: 0.88rem;
   font-weight: 800;
+  animation: fade-up 700ms var(--ease-out-soft) both;
+}
+
+.trust-row span:nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.trust-row span:nth-child(3) {
+  animation-delay: 180ms;
 }
 
 .section,
@@ -397,6 +453,7 @@ legend {
   gap: 0.8rem;
   width: min(760px, 100%);
   margin-bottom: 2rem;
+  animation: fade-up 760ms var(--ease-out-soft) both;
 }
 
 .compact-heading {
@@ -453,6 +510,13 @@ legend {
   background: rgba(255, 255, 255, 0.07);
 }
 
+.why-grid article:hover,
+.why-grid article:focus-within {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
+}
+
 .why-grid svg {
   color: var(--lime);
 }
@@ -490,6 +554,15 @@ legend {
   display: grid;
   gap: 0.85rem;
   padding: 1.35rem;
+  animation: fade-up 780ms var(--ease-out-soft) both;
+}
+
+.service-card:hover,
+.service-card:focus-within,
+.faq-grid article:hover,
+.metric-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 40px rgba(8, 34, 32, 0.12);
 }
 
 .service-card svg {
@@ -530,6 +603,12 @@ legend {
   padding: 1.2rem;
   border-left: 4px solid var(--green);
   background: #edf4ff;
+  animation: fade-up 840ms var(--ease-out-soft) both;
+}
+
+.process-list div:hover {
+  transform: translateX(4px);
+  box-shadow: 0 14px 28px rgba(21, 94, 239, 0.12);
 }
 
 .process-list span {
@@ -555,6 +634,7 @@ legend {
   border-radius: 8px;
   background: var(--white);
   box-shadow: var(--shadow);
+  animation: fade-up 820ms var(--ease-out-soft) both;
 }
 
 .quote-tool {
@@ -610,6 +690,7 @@ legend {
   background:
     linear-gradient(135deg, rgba(38, 132, 255, 0.26), rgba(169, 180, 196, 0.18)),
     var(--teal-900);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .contact-fields {
@@ -695,6 +776,11 @@ legend {
   background: #05070d;
   color: var(--white);
   box-shadow: var(--shadow);
+}
+
+.wheel-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 56px rgba(4, 9, 20, 0.24);
 }
 
 .wheel-status {
@@ -834,6 +920,7 @@ legend {
   border: 1px solid rgba(143, 211, 255, 0.38);
   border-radius: 8px;
   background: rgba(143, 211, 255, 0.12);
+  animation: fade-up 420ms var(--ease-out-soft);
 }
 
 .prize-result strong {
@@ -1248,6 +1335,14 @@ legend {
   padding-block: 0.58rem;
 }
 
+.tool-panel:hover {
+  box-shadow: 0 22px 54px rgba(4, 9, 20, 0.18);
+}
+
+.table-row:hover {
+  transform: translateX(2px);
+}
+
 .icon-button {
   display: grid;
   place-items: center;
@@ -1296,6 +1391,83 @@ legend {
   display: grid;
   gap: 0.95rem;
   margin-bottom: 1rem;
+}
+
+.service-card:nth-child(2),
+.metric-card:nth-child(2),
+.process-list div:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.service-card:nth-child(3),
+.metric-card:nth-child(3),
+.process-list div:nth-child(3) {
+  animation-delay: 150ms;
+}
+
+.service-card:nth-child(4) {
+  animation-delay: 220ms;
+}
+
+.service-card:nth-child(5) {
+  animation-delay: 290ms;
+}
+
+.service-card:nth-child(6) {
+  animation-delay: 360ms;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down-fade {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-image-drift {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.08) translate3d(8px, -4px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (max-width: 1040px) {
