@@ -446,17 +446,37 @@ function IconButton({
   );
 }
 
+function getViewFromLocation() {
+  const { pathname, hash } = window.location;
+  if (pathname === "/owner" || hash === "#/ops") {
+    return "ops" as const;
+  }
+  return "site" as const;
+}
+
 function App() {
-  const [view, setView] = useState<View>(() => (window.location.hash === "#/ops" ? "ops" : "site"));
+  const [view, setView] = useState<View>(() => getViewFromLocation());
 
   useEffect(() => {
-    const handleHash = () => setView(window.location.hash === "#/ops" ? "ops" : "site");
-    window.addEventListener("hashchange", handleHash);
-    return () => window.removeEventListener("hashchange", handleHash);
+    const syncView = () => {
+      const nextView = getViewFromLocation();
+      if (window.location.hash === "#/ops") {
+        window.history.replaceState({}, "", "/owner");
+      }
+      setView(nextView);
+    };
+
+    syncView();
+    window.addEventListener("popstate", syncView);
+    window.addEventListener("hashchange", syncView);
+    return () => {
+      window.removeEventListener("popstate", syncView);
+      window.removeEventListener("hashchange", syncView);
+    };
   }, []);
 
   const goTo = (nextView: View) => {
-    window.location.hash = nextView === "ops" ? "/ops" : "/";
+    window.history.pushState({}, "", nextView === "ops" ? "/owner" : "/");
     setView(nextView);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

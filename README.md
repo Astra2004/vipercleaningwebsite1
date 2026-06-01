@@ -40,7 +40,7 @@ http://127.0.0.1:5173/
 Owner app:
 
 ```text
-http://127.0.0.1:5173/#/ops
+http://127.0.0.1:5173/owner
 ```
 
 Default local owner password:
@@ -120,7 +120,7 @@ In Render:
 5. Wait until Render gives you a live URL like `https://your-service.onrender.com`.
 6. Open:
    - `/`
-   - `/#/ops`
+   - `/owner`
    - `/api/health`
 
 ## Squarespace DNS Setup
