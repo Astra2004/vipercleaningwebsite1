@@ -471,6 +471,35 @@ function getSitePageFromLocation() {
   return "home" as const;
 }
 
+function getSitePagePath(page: SitePage) {
+  return page === "home" ? "/" : `/${page}`;
+}
+
+function SiteLink({
+  page,
+  className,
+  onNavigate,
+  children,
+}: {
+  page: SitePage;
+  className?: string;
+  onNavigate: (page: SitePage) => void;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={getSitePagePath(page)}
+      className={className}
+      onClick={(event) => {
+        event.preventDefault();
+        onNavigate(page);
+      }}
+    >
+      {children}
+    </a>
+  );
+}
+
 function App() {
   const [view, setView] = useState<View>(() => getViewFromLocation());
   const [sitePage, setSitePage] = useState<SitePage>(() => getSitePageFromLocation());
@@ -718,16 +747,97 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
           : {
               eyebrow: "Contact us",
               title: "Tell us what you need cleaned.",
-              copy:
-                "Reach out for residential, commercial, deep cleaning, move-out, or vacation rental service across Central Florida.",
+          copy:
+              "Reach out for residential, commercial, deep cleaning, move-out, or vacation rental service across Central Florida.",
             };
+
+  useEffect(() => {
+    const metaByPage: Record<SitePage, { title: string; description: string; path: string }> = {
+      home: {
+        title: "Viper Cleaning Services | House Cleaning, Deep Cleaning & Turnovers in Central Florida",
+        description:
+          "Viper Cleaning Services provides house cleaning, deep cleaning, move-out cleaning, commercial cleaning, and vacation rental turnovers in Kissimmee, Orlando, Davenport, Clermont, Winter Garden, Celebration, St. Cloud, and Winter Haven.",
+        path: "/",
+      },
+      estimate: {
+        title: "Get a Cleaning Estimate | Viper Cleaning Services",
+        description:
+          "Request a house cleaning, deep cleaning, move-out cleaning, or commercial cleaning estimate from Viper Cleaning Services in Central Florida.",
+        path: "/estimate",
+      },
+      spin: {
+        title: "Redeem Your Spin Code | Viper Cleaning Services",
+        description:
+          "Booked customers can redeem a Viper Cleaning Services one-time spin code for a cleaning prize tied to their service.",
+        path: "/spin",
+      },
+      contact: {
+        title: "Contact Viper Cleaning Services | Central Florida Cleaning Company",
+        description:
+          "Contact Viper Cleaning Services for residential, commercial, move-out, deep cleaning, and vacation rental cleaning in Central Florida.",
+        path: "/contact",
+      },
+    };
+
+    const activeMeta = metaByPage[sitePage];
+    const canonicalUrl = `https://www.vipercleaningservices.com${activeMeta.path}`;
+
+    document.title = activeMeta.title;
+
+    const ensureMeta = (selector: string, attributes: Record<string, string>) => {
+      let element = document.head.querySelector(selector) as HTMLMetaElement | null;
+      if (!element) {
+        element = document.createElement("meta");
+        Object.entries(attributes).forEach(([key, value]) => element?.setAttribute(key, value));
+        document.head.appendChild(element);
+      }
+      return element;
+    };
+
+    const descriptionMeta = ensureMeta('meta[name="description"]', { name: "description" });
+    descriptionMeta.setAttribute("content", activeMeta.description);
+
+    const robotsMeta = ensureMeta('meta[name="robots"]', { name: "robots" });
+    robotsMeta.setAttribute("content", "index, follow");
+
+    const ogTitle = ensureMeta('meta[property="og:title"]', { property: "og:title" });
+    ogTitle.setAttribute("content", activeMeta.title);
+
+    const ogDescription = ensureMeta('meta[property="og:description"]', { property: "og:description" });
+    ogDescription.setAttribute("content", activeMeta.description);
+
+    const ogUrl = ensureMeta('meta[property="og:url"]', { property: "og:url" });
+    ogUrl.setAttribute("content", canonicalUrl);
+
+    const twitterTitle = ensureMeta('meta[name="twitter:title"]', { name: "twitter:title" });
+    twitterTitle.setAttribute("content", activeMeta.title);
+
+    const twitterDescription = ensureMeta('meta[name="twitter:description"]', { name: "twitter:description" });
+    twitterDescription.setAttribute("content", activeMeta.description);
+
+    let canonical = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", canonicalUrl);
+  }, [sitePage]);
 
   return (
     <div className="site-shell">
       <header className="site-nav">
-        <button className="brand-link brand-button" type="button" aria-label="Viper Cleaning Services home" onClick={() => navigateToSitePage("home")}>
+        <a
+          className="brand-link brand-button"
+          href="/"
+          aria-label="Viper Cleaning Services home"
+          onClick={(event) => {
+            event.preventDefault();
+            navigateToSitePage("home");
+          }}
+        >
           <LogoMark />
-        </button>
+        </a>
         <button className="menu-button" type="button" aria-label="Toggle navigation" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -738,14 +848,17 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
             { id: "spin", label: "Spin" },
             { id: "contact", label: "Contact" },
           ].map((item) => (
-            <button
+            <a
               key={item.id}
-              type="button"
+              href={getSitePagePath(item.id as SitePage)}
               className={sitePage === item.id ? "active" : ""}
-              onClick={() => navigateToSitePage(item.id as SitePage)}
+              onClick={(event) => {
+                event.preventDefault();
+                navigateToSitePage(item.id as SitePage);
+              }}
             >
               {item.label}
-            </button>
+            </a>
           ))}
         </nav>
       </header>
@@ -760,14 +873,14 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
             <p className="motto">{business.motto}</p>
             <p className="hero-copy">{pageIntro.copy}</p>
             <div className="hero-actions">
-              <button className="btn primary" type="button" onClick={() => navigateToSitePage(sitePage === "home" ? "estimate" : "contact")}>
+              <SiteLink className="btn primary" page={sitePage === "home" ? "estimate" : "contact"} onNavigate={navigateToSitePage}>
                 <Calculator size={18} />
                 {sitePage === "home" ? "Get an estimate" : "Request service"}
-              </button>
-              <button className="btn secondary" type="button" onClick={() => navigateToSitePage("contact")}>
+              </SiteLink>
+              <SiteLink className="btn secondary" page="contact" onNavigate={navigateToSitePage}>
                 <Mail size={18} />
                 Contact us
-              </button>
+              </SiteLink>
               <a className="btn secondary" href={business.phoneHref}>
                 <Phone size={18} />
                 Call now
@@ -865,14 +978,14 @@ function MarketingSite({ sitePage, onNavigate }: { sitePage: SitePage; onNavigat
                 <Phone size={18} />
                 {business.phoneDisplay}
               </a>
-              <button className="btn footer-btn" type="button" onClick={() => navigateToSitePage("estimate")}>
+              <SiteLink className="btn footer-btn" page="estimate" onNavigate={navigateToSitePage}>
                 <Calculator size={18} />
                 Estimate a cleaning
-              </button>
-              <button className="btn footer-btn" type="button" onClick={() => navigateToSitePage("contact")}>
+              </SiteLink>
+              <SiteLink className="btn footer-btn" page="contact" onNavigate={navigateToSitePage}>
                 <Mail size={18} />
                 Contact form
-              </button>
+              </SiteLink>
             </div>
             <div className="footer-note-card">
               <h3>Need a fast answer?</h3>
