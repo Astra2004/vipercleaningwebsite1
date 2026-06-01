@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { calculateEstimate, extraLabels, frequencyLabels, serviceLabels, wheelPrizes } from "./pricing.mjs";
 import { db, getAdminData, nowIso, replaceAdminData } from "./database.mjs";
-import { sendQuoteEmails } from "./mailer.mjs";
+import { sendContactEmail, sendQuoteEmails } from "./mailer.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -338,6 +338,32 @@ app.post("/api/public/quote", async (req, res) => {
     ok: true,
     quoteId,
     estimateId,
+    emailStatus,
+  });
+});
+
+app.post("/api/public/contact", async (req, res) => {
+  const name = String(req.body?.name || "").trim();
+  const phone = String(req.body?.phone || "").trim();
+  const email = String(req.body?.email || "").trim();
+  const service = String(req.body?.service || "").trim();
+  const message = String(req.body?.message || "").trim();
+
+  if (!name || !message || (!phone && !email)) {
+    return res.status(400).json({ error: "Name, message, and either phone or email are required." });
+  }
+
+  let emailStatus = { ownerSent: false, customerSent: false, skipped: true };
+
+  try {
+    emailStatus = await sendContactEmail({ name, phone, email, service, message });
+  } catch (error) {
+    console.error("Contact email failed", error);
+    emailStatus = { ownerSent: false, customerSent: false, skipped: false, error: "Message saved, but email delivery failed." };
+  }
+
+  res.status(201).json({
+    ok: true,
     emailStatus,
   });
 });

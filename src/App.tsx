@@ -61,6 +61,14 @@ type RequestStatus = {
   message: string;
 };
 
+type ContactFormInput = {
+  name: string;
+  phone: string;
+  email: string;
+  service: string;
+  message: string;
+};
+
 type Estimate = EstimateInput & {
   id: string;
   total: number;
@@ -492,6 +500,14 @@ function MarketingSite() {
   const [spinCodeInput, setSpinCodeInput] = useLocalStorage("viper-public-spin-code", "");
   const [quoteStatus, setQuoteStatus] = useState<RequestStatus>({ state: "idle", message: "" });
   const [spinStatus, setSpinStatus] = useState<RequestStatus>({ state: "idle", message: "" });
+  const [contactFormStatus, setContactFormStatus] = useState<RequestStatus>({ state: "idle", message: "" });
+  const [contactForm, setContactForm] = useState<ContactFormInput>({
+    name: "",
+    phone: "",
+    email: "",
+    service: "Whole House Cleaning",
+    message: "",
+  });
   const [contact, setContact] = useState<QuoteContact>({
     name: "",
     phone: "",
@@ -618,6 +634,42 @@ function MarketingSite() {
       setSpinStatus({ state: "success", message: `Prize saved with code ${claim.code}.` });
       setIsSpinning(false);
     }, 1900);
+  };
+
+  const submitContactForm = async (event: FormEvent) => {
+    event.preventDefault();
+    setContactFormStatus({ state: "loading", message: "Sending your message..." });
+
+    try {
+      const response = await apiJson<{
+        ok: boolean;
+        emailStatus?: { ownerSent: boolean; customerSent: boolean; skipped?: boolean };
+      }>("/api/public/contact", {
+        method: "POST",
+        body: JSON.stringify(contactForm),
+      });
+
+      const emailCopy =
+        response.emailStatus?.ownerSent || response.emailStatus?.customerSent
+          ? " Viper Cleaning Services received it and a copy can go to your email."
+          : response.emailStatus?.skipped
+            ? " Email delivery will work once SMTP is configured on the server."
+            : "";
+
+      setContactFormStatus({
+        state: "success",
+        message: `Your message was sent.${emailCopy}`,
+      });
+      setContactForm({
+        name: "",
+        phone: "",
+        email: "",
+        service: "Whole House Cleaning",
+        message: "",
+      });
+    } catch (error) {
+      setContactFormStatus({ state: "error", message: error instanceof Error ? error.message : "Unable to send your message." });
+    }
   };
 
   return (
@@ -921,19 +973,66 @@ function MarketingSite() {
               </div>
             </div>
           </div>
-          <div className="footer-actions">
-            <a className="btn footer-btn" href={`mailto:${business.email}`}>
-              <Mail size={18} />
-              {business.email}
-            </a>
-            <a className="btn footer-btn" href={business.phoneHref}>
-              <Phone size={18} />
-              {business.phoneDisplay}
-            </a>
-            <a className="btn footer-btn" href="#estimate">
-              <Calculator size={18} />
-              Estimate a cleaning
-            </a>
+          <div className="footer-contact-wrap">
+            <div className="footer-actions">
+              <a className="btn footer-btn" href={`mailto:${business.email}`}>
+                <Mail size={18} />
+                {business.email}
+              </a>
+              <a className="btn footer-btn" href={business.phoneHref}>
+                <Phone size={18} />
+                {business.phoneDisplay}
+              </a>
+              <a className="btn footer-btn" href="#estimate">
+                <Calculator size={18} />
+                Estimate a cleaning
+              </a>
+            </div>
+
+            <form className="footer-contact-form" onSubmit={submitContactForm}>
+              <div className="panel-heading compact-panel-heading light-panel-heading">
+                <h3>Contact us</h3>
+                <span>Send a message and we will follow up</span>
+              </div>
+              <div className="form-grid compact">
+                <label>
+                  Name
+                  <input value={contactForm.name} onChange={(event) => setContactForm({ ...contactForm, name: event.target.value })} placeholder="Your name" required />
+                </label>
+                <label>
+                  Phone
+                  <input value={contactForm.phone} onChange={(event) => setContactForm({ ...contactForm, phone: event.target.value })} placeholder="Best phone number" />
+                </label>
+                <label>
+                  Email
+                  <input type="email" value={contactForm.email} onChange={(event) => setContactForm({ ...contactForm, email: event.target.value })} placeholder="Email address" />
+                </label>
+                <label>
+                  Service
+                  <select value={contactForm.service} onChange={(event) => setContactForm({ ...contactForm, service: event.target.value })}>
+                    {Object.values(serviceLabels).map((label) => (
+                      <option value={label} key={label}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label>
+                Message
+                <textarea
+                  value={contactForm.message}
+                  onChange={(event) => setContactForm({ ...contactForm, message: event.target.value })}
+                  placeholder="Tell us what you need cleaned, where the property is, and the best way to reach you."
+                  required
+                />
+              </label>
+              <button className="btn primary full" type="submit" disabled={contactFormStatus.state === "loading"}>
+                <Mail size={18} />
+                {contactFormStatus.state === "loading" ? "Sending..." : "Send message"}
+              </button>
+              {contactFormStatus.message && <p className={`status-message footer-status ${contactFormStatus.state}`}>{contactFormStatus.message}</p>}
+            </form>
           </div>
         </div>
       </footer>

@@ -105,3 +105,64 @@ export async function sendQuoteEmails({ quoteId, contact, computed, notes, spinC
 
   return { ownerSent: true, customerSent: Boolean(customerMessage), skipped: false };
 }
+
+export async function sendContactEmail({ name, phone, email, service, message }) {
+  if (!transporter) {
+    return { ownerSent: false, customerSent: false, skipped: true };
+  }
+
+  const summaryLines = [
+    line("Name", name),
+    line("Phone", phone),
+    line("Email", email),
+    line("Service interest", service),
+    line("Message", message),
+  ];
+
+  const text = summaryLines.join("\n");
+  const htmlRows = summaryLines
+    .map((item) => {
+      const [labelText, ...rest] = item.split(": ");
+      return `<tr><th align="left" style="padding:8px;border-bottom:1px solid #dbe3ef;">${labelText}</th><td style="padding:8px;border-bottom:1px solid #dbe3ef;">${rest.join(": ")}</td></tr>`;
+    })
+    .join("");
+
+  const ownerMessage = {
+    from: mailFrom,
+    to: ownerEmail,
+    replyTo: email || undefined,
+    subject: `New Viper contact form message from ${name}`,
+    text,
+    html: `
+      <div style="font-family:Arial,sans-serif;color:#111827;line-height:1.5;">
+        <h2 style="margin:0 0 12px;">Viper Cleaning Services Contact Request</h2>
+        <p style="margin:0 0 16px;">A customer submitted the website contact form.</p>
+        <table style="border-collapse:collapse;width:100%;max-width:680px;">${htmlRows}</table>
+      </div>
+    `,
+  };
+
+  const customerMessage = email
+    ? {
+        from: mailFrom,
+        to: email,
+        subject: "We received your message | Viper Cleaning Services",
+        text: `Thanks for contacting Viper Cleaning Services.\n\n${text}\n\nWe will follow up with you soon.`,
+        html: `
+          <div style="font-family:Arial,sans-serif;color:#111827;line-height:1.5;">
+            <h2 style="margin:0 0 12px;">Thanks for contacting Viper Cleaning Services</h2>
+            <p style="margin:0 0 16px;">We received your message and will follow up with you soon.</p>
+            <table style="border-collapse:collapse;width:100%;max-width:680px;">${htmlRows}</table>
+          </div>
+        `,
+      }
+    : null;
+
+  await transporter.sendMail(ownerMessage);
+
+  if (customerMessage) {
+    await transporter.sendMail(customerMessage);
+  }
+
+  return { ownerSent: true, customerSent: Boolean(customerMessage), skipped: false };
+}

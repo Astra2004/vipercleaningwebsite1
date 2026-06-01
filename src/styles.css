@@ -982,6 +982,60 @@ legend {
 
 .footer-layout {
   display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
+  gap: clamp(1.5rem, 5vw, 4rem);
+  align-items: start;
+}
+
+.footer-contact-wrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.footer-contact-form {
+  display: grid;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: clamp(1rem, 3vw, 1.4rem);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+.footer-contact-form label,
+.light-panel-heading h3,
+.light-panel-heading span {
+  color: var(--white);
+}
+
+.light-panel-heading span {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.footer-contact-form input,
+.footer-contact-form select,
+.footer-contact-form textarea {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.footer-contact-form input::placeholder,
+.footer-contact-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.44);
+}
+
+.footer-status {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.footer-status.success {
+  border: 1px solid rgba(143, 211, 255, 0.24);
+}
+
+.footer-layout {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2rem;
   align-items: start;
@@ -1475,6 +1529,10 @@ legend {
   .faq-grid,
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-layout {
+    grid-template-columns: 1fr;
   }
 
   .split-layout,
