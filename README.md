@@ -70,7 +70,9 @@ DATABASE_PATH=./data/viper-cleaning.sqlite
 OWNER_PASSWORD=use-a-strong-private-password
 SESSION_SECRET=use-a-long-random-secret
 OWNER_EMAIL=shane.vipercleaningservices@gmail.com
-MAIL_FROM=shane.vipercleaningservices@gmail.com
+MAIL_FROM=Viper Cleaning Services <onboarding@resend.dev>
+RESEND_FROM=Viper Cleaning Services <onboarding@resend.dev>
+RESEND_API_KEY=your-resend-api-key
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=shane.vipercleaningservices@gmail.com
@@ -114,8 +116,7 @@ In Render:
 3. Set these secret environment variables:
    - `OWNER_PASSWORD`
    - `SESSION_SECRET`
-   - `SMTP_USER`
-   - `SMTP_PASS`
+   - `RESEND_API_KEY`
 4. Deploy the service.
 5. Wait until Render gives you a live URL like `https://your-service.onrender.com`.
 6. Open:
@@ -166,9 +167,26 @@ Render custom domain help:
    - one-time spin redemption
    - quote email delivery
 
-## Gmail Email Setup
+## Resend Email Setup
 
-If you use Gmail for sending quote emails:
+Recommended for Render:
+
+1. Create a Resend account.
+2. Create an API key.
+3. In Render, set:
+   - `RESEND_API_KEY`
+   - `MAIL_FROM`
+   - `RESEND_FROM`
+4. For first testing, `onboarding@resend.dev` works as a sender. For production customer emails, verify your own sending domain in Resend and then change `MAIL_FROM` / `RESEND_FROM` to that address.
+
+Example:
+
+```bash
+MAIL_FROM=Viper Cleaning Services <onboarding@resend.dev>
+RESEND_FROM=Viper Cleaning Services <onboarding@resend.dev>
+```
+
+If you still want SMTP as a fallback, keep:
 
 1. Turn on 2-Step Verification for the Gmail account.
 2. Create a Google App Password.
@@ -184,6 +202,77 @@ Do not use your normal Gmail password.
 
 The spin wheel is now code-backed. Generate a one-time code from the owner dashboard after a booking, then the customer can redeem that code for exactly one spin.
 
-Quote emails are SMTP-backed. For Gmail, create a Google app password and put it in `SMTP_PASS`; do not use your normal Gmail password.
+Quote and contact emails now support Resend first, with SMTP left as a fallback. On Render, Resend is the recommended provider because SMTP connections may time out depending on the hosting plan.
 
 SQLite is good for launch and a small local service business. If traffic grows or multiple staff members use the dashboard heavily, move the database to managed Postgres.
+
+## Facebook Page Posting Helper
+
+There is a simple Python helper at [scripts/facebook_page_poster.py](</C:/Users/shane/Documents/viper cleaning/scripts/facebook_page_poster.py>) that can post the next queued update to a Facebook business Page.
+
+Important:
+
+- This is for a Facebook Page, not a personal profile.
+- You need a Page access token from Meta.
+- The safest way to keep it posting regularly is to run it on a schedule with Windows Task Scheduler.
+
+Required environment variables:
+
+```bash
+FACEBOOK_PAGE_ID=your-facebook-page-id
+FACEBOOK_PAGE_ACCESS_TOKEN=your-facebook-page-access-token
+```
+
+Queue example:
+
+[marketing/facebook_queue.example.json](</C:/Users/shane/Documents/viper cleaning/marketing/facebook_queue.example.json>)
+
+Example dry run:
+
+```bash
+python scripts/facebook_page_poster.py --queue marketing/facebook_queue.json --dry-run
+```
+
+Example live run:
+
+```bash
+python scripts/facebook_page_poster.py --queue marketing/facebook_queue.json
+```
+
+The script posts the next item with `status: "pending"` whose `publish_after` time has arrived, then marks it as `posted`.
+
+## Cloudflare Worker Scheduler For Facebook
+
+If you want the posting to run without your computer being on, use the Cloudflare Worker version:
+
+- [workers/facebook-scheduler/src/index.js](</C:/Users/shane/Documents/viper cleaning/workers/facebook-scheduler/src/index.js>)
+- [workers/facebook-scheduler/wrangler.jsonc](</C:/Users/shane/Documents/viper cleaning/workers/facebook-scheduler/wrangler.jsonc>)
+- [workers/facebook-scheduler/posts.example.json](</C:/Users/shane/Documents/viper cleaning/workers/facebook-scheduler/posts.example.json>)
+
+What it does:
+
+- runs on a Cloudflare Cron Trigger every day
+- posts the next message in your rotation
+- stores the last-used post index in Workers KV
+- gives you a manual trigger URL for testing
+
+Secrets to set in Cloudflare:
+
+- `FACEBOOK_PAGE_ID`
+- `FACEBOOK_PAGE_ACCESS_TOKEN`
+- `FACEBOOK_POSTS_JSON`
+- `MANUAL_TRIGGER_KEY`
+
+The example cron in `wrangler.jsonc` is:
+
+```text
+0 14 * * *
+```
+
+Cloudflare Cron Triggers run on UTC time, so change that if you want a different local posting hour. Cloudflare’s docs confirm Cron Triggers use a `scheduled()` handler and are configured in Wrangler, and that secrets should be stored as Worker secrets: [Cron Triggers](https://developers.cloudflare.com/workers/configuration/cron-triggers/), [Secrets](https://developers.cloudflare.com/workers/configuration/secrets/), [Workers KV](https://developers.cloudflare.com/kv/get-started/).
+
+## Flyer Concepts
+
+Starter flyer concepts are saved here:
+
+[marketing/flyer-ideas.md](</C:/Users/shane/Documents/viper cleaning/marketing/flyer-ideas.md>)

@@ -2,11 +2,12 @@ import nodemailer from "nodemailer";
 import { extraLabels, frequencyLabels, serviceLabels } from "./pricing.mjs";
 
 const ownerEmail = process.env.OWNER_EMAIL || "shane.vipercleaningservices@gmail.com";
+const resendApiKey = process.env.RESEND_API_KEY || "";
 const smtpHost = process.env.SMTP_HOST || "";
 const smtpPort = Number(process.env.SMTP_PORT || 587);
 const smtpUser = process.env.SMTP_USER || "";
 const smtpPass = process.env.SMTP_PASS || "";
-const mailFrom = process.env.MAIL_FROM || ownerEmail;
+const mailFrom = process.env.MAIL_FROM || process.env.RESEND_FROM || ownerEmail;
 
 const transporter =
   smtpHost && smtpUser && smtpPass
@@ -30,11 +31,44 @@ function formatExtras(extras) {
 }
 
 export function emailEnabled() {
-  return Boolean(transporter);
+  return Boolean(resendApiKey || transporter);
+}
+
+async function sendEmail(message) {
+  if (resendApiKey) {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: message.from,
+        to: Array.isArray(message.to) ? message.to : [message.to],
+        reply_to: message.replyTo ? [message.replyTo] : undefined,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Resend API error ${response.status}: ${errorText}`);
+    }
+
+    return response.json();
+  }
+
+  if (!transporter) {
+    throw new Error("No email provider is configured.");
+  }
+
+  return transporter.sendMail(message);
 }
 
 export async function sendQuoteEmails({ quoteId, contact, computed, notes, spinClaim }) {
-  if (!transporter) {
+  if (!resendApiKey && !transporter) {
     return { ownerSent: false, customerSent: false, skipped: true };
   }
 
@@ -97,17 +131,17 @@ export async function sendQuoteEmails({ quoteId, contact, computed, notes, spinC
       }
     : null;
 
-  await transporter.sendMail(ownerMessage);
+  await sendEmail(ownerMessage);
 
   if (customerMessage) {
-    await transporter.sendMail(customerMessage);
+    await sendEmail(customerMessage);
   }
 
   return { ownerSent: true, customerSent: Boolean(customerMessage), skipped: false };
 }
 
 export async function sendContactEmail({ name, phone, email, service, message }) {
-  if (!transporter) {
+  if (!resendApiKey && !transporter) {
     return { ownerSent: false, customerSent: false, skipped: true };
   }
 
@@ -158,10 +192,10 @@ export async function sendContactEmail({ name, phone, email, service, message })
       }
     : null;
 
-  await transporter.sendMail(ownerMessage);
+  await sendEmail(ownerMessage);
 
   if (customerMessage) {
-    await transporter.sendMail(customerMessage);
+    await sendEmail(customerMessage);
   }
 
   return { ownerSent: true, customerSent: Boolean(customerMessage), skipped: false };
